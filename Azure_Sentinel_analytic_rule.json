@@ -1,0 +1,87 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ae0613f0-a72a-4539-8419-5db37d94a8c7')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ae0613f0-a72a-4539-8419-5db37d94a8c7')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "displayName": "Incidents based on SlowLoris DDOS Detection ",
+                "description": "Attackers are trying to impact your envionment by leveraging a distributed denial of service attack, the following rule is looking for DDOS patterns similar to SlowLoris attack , Slowloris is an application layer DDoS attack which uses partial HTTP requests to open connections between a single computer and a targeted Web server, then keeping those connections open for as long as possible, thus overwhelming and slowing down the target. This type of DDoS attack requires minimal bandwidth to launch and only impacts the target web server, leaving other services and ports unaffected. Slowloris DDoS attacks can target many type of Web server software, but has proven highly-effective against Apache 1.x and 2.x.",
+                "severity": "Medium",
+                "enabled": true,
+                "query": "AzureDiagnostics\r\n| where ResourceType == \"AZUREFIREWALLS\"\r\n| where OperationName == \"AzureFirewallIDSLog\"\r\n| parse msg_s with Protocol \" request from \" SourceIP \":\" SourcePort \" to \" DestIP \":\" DestPort \".\" Action \".\" SignatureID \".\" Message\r\n| where SignatureID contains \"2012870\" or  SignatureID contains \"2012801\"",
+                "queryFrequency": "PT5M",
+                "queryPeriod": "PT5M",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 500,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "tactics": [
+                    "CommandAndControl"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "PT1H",
+                        "matchingMethod": "AllEntities",
+                        "groupByEntities": [],
+                        "groupByAlertDetails": [],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "SingleAlert"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "SourceIP"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Host",
+                        "fieldMappings": [
+                            {
+                                "identifier": "HostName",
+                                "columnName": "Computer"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ae0613f0-a72a-4539-8419-5db37d94a8c7/actions/62aa12ef49744e97b035d832577ebe9c')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/ae0613f0-a72a-4539-8419-5db37d94a8c7/62aa12ef49744e97b035d832577ebe9c')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules/actions",
+            "apiVersion": "2021-03-01-preview",
+            "properties": {
+                "ruleId": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ae0613f0-a72a-4539-8419-5db37d94a8c7')]",
+                "triggerUri": "[listCallbackURL(concat('/subscriptions/1c61ccbf-70b3-45a3-a1fb-848ce46d70a6/resourceGroups/SeanResourcegroup/providers/Microsoft.Logic/workflows/slowloris','/triggers/When_a_response_to_an_Azure_Sentinel_alert_is_triggered'),'2016-06-01').value]",
+                "logicAppResourceId": "/subscriptions/1c61ccbf-70b3-45a3-a1fb-848ce46d70a6/resourceGroups/SeanResourcegroup/providers/Microsoft.Logic/workflows/slowloris",
+                "operatesOn": "Alert"
+            },
+            "dependsOn": [
+                "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/ae0613f0-a72a-4539-8419-5db37d94a8c7')]"
+            ]
+        }
+    ]
+}
